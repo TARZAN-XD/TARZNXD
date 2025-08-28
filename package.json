@@ -1,7 +1,7 @@
 {
   "name": "my-chat-ai",
   "version": "1.0.0",
-  "description": "دردشة AI بأسلوب إنستقرام",
+  "description": "دردشة AI متجاوبة، ثابتة، تشبه إنستقرام",
   "main": "server.js",
   "type": "module",
   "scripts": {
