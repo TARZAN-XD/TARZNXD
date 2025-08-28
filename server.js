@@ -13,7 +13,7 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, "/"))); // عرض index.html مباشرة
 
-// 🔥 مفتاح Gemini API الخاص بك
+// 🔥 مفتاح Gemini API
 const GEMINI_API_KEY = "AIzaSyA4xPE8rP5KjiCOY26xJdNLoSjBRSRTJAY";
 
 app.post("/chat", async (req, res) => {
@@ -32,6 +32,7 @@ app.post("/chat", async (req, res) => {
     );
 
     const data = await response.json();
+    console.log(JSON.stringify(data, null, 2)); // للتأكد من الرد
     const botReply = data?.candidates?.[0]?.content?.parts?.[0]?.text || "😅 لم أفهم رسالتك";
 
     res.json({ reply: botReply });
