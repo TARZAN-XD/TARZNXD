@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>دردشة AI - إنستقرام كامل</title>
+<style>
+body { margin: 0; font-family: Arial, sans-serif; background: #fafafa; display: flex; justify-content: center; align-items: center; height: 100vh; }
+#chat { width: 400px; height: 600px; border: 1px solid #ddd; border-radius: 15px; background: #fff; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+#messages { flex: 1; padding: 10px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+
+.message { display: flex; max-width: 80%; padding: 8px 12px; border-radius: 20px; position: relative; word-wrap: break-word; opacity: 0; transform: translateY(20px); animation: slideIn 0.3s forwards; }
+.user { background: #dcf8c6; align-self: flex-end; border-bottom-right-radius: 0; flex-direction: row-reverse; }
+.bot { background: #007bff; color: #fff; align-self: flex-start; border-bottom-left-radius: 0; }
+
+.avatar { width: 32px; height: 32px; border-radius: 50%; margin: 0 8px; }
+.content { display: flex; flex-direction: column; }
+.text { margin-bottom: 4px; }
+.time { font-size: 10px; color: #555; align-self: flex-end; }
+.message img { max-width: 200px; border-radius: 10px; margin-top: 5px; }
+
+#inputArea { display: flex; padding: 10px; border-top: 1px solid #ddd; background: #f1f1f1; }
+#inputArea input { flex: 1; padding: 10px; border-radius: 20px; border: 1px solid #ccc; outline: none; }
+#inputArea button { margin-left: 5px; padding: 10px 15px; border: none; border-radius: 20px; background: #0095f6; color: #fff; cursor: pointer; }
+#inputArea label { margin-left:5px; cursor: pointer; }
+#fileInput { display:none; }
+
+@keyframes slideIn { to { opacity: 1; transform: translateY(0); } }
+</style>
+</head>
+<body>
+<div id="chat">
+  <div id="messages"></div>
+  <div id="inputArea">
+    <input id="input" type="text" placeholder="اكتب رسالتك...">
+    <label for="fileInput">📎</label>
+    <input type="file" id="fileInput">
+    <button onclick="sendMessage()">إرسال</button>
+  </div>
+</div>
+
+<script>
+const userAvatar = "https://i.pravatar.cc/32?img=3";
+const botAvatar = "https://i.pravatar.cc/32?img=12";
+
+function formatTime() {
+  const now = new Date();
+  return now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+}
+
+function notifyUser(text) {
+  if (document.hidden) {
+    new Notification("رسالة جديدة من البوت", { body: text });
+  }
+}
+
+async function sendMessage() {
+  const input = document.getElementById("input");
+  const messages = document.getElementById("messages");
+  const fileInput = document.getElementById("fileInput");
+
+  if (input.value.trim() === "" && fileInput.files.length === 0) return;
+
+  let userContent = input.value;
+
+  // رسالة المستخدم
+  const userMsg = document.createElement("div");
+  userMsg.className = "message user";
+  userMsg.innerHTML = `
+    <img class="avatar" src="${userAvatar}" alt="user">
+    <div class="content">
+      <div class="text">${userContent}</div>
+      ${fileInput.files[0] ? `<img src="${URL.createObjectURL(fileInput.files[0])}">` : ""}
+      <div class="time">${formatTime()}</div>
+    </div>
+  `;
+  messages.appendChild(userMsg);
+  messages.scrollTop = messages.scrollHeight;
+
+  const formData = { message: userContent };
+  const response = await fetch("/chat", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify(formData)
+  });
+  const data = await response.json();
+
+  // رسالة البوت
+  const botMsg = document.createElement("div");
+  botMsg.className = "message bot";
+  botMsg.innerHTML = `
+    <img class="avatar" src="${botAvatar}" alt="bot">
+    <div class="content">
+      <div class="text">${data.reply}</div>
+      <div class="time">${formatTime()}</div>
+    </div>
+  `;
+  messages.appendChild(botMsg);
+  messages.scrollTop = messages.scrollHeight;
+
+  notifyUser(data.reply);
+
+  input.value = "";
+  fileInput.value = "";
+  input.focus();
+}
+
+if (Notification.permission !== "granted") {
+  Notification.requestPermission();
+}
+</script>
+</body>
+</html>
